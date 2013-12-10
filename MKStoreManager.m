@@ -54,7 +54,7 @@
 @property (nonatomic, copy) void (^onTransactionCompleted)(NSString *productId, NSData* receiptData, NSArray* downloads);
 
 @property (nonatomic, copy) void (^onRestoreFailed)(NSError* error);
-@property (nonatomic, copy) void (^onRestoreCompleted)();
+@property (nonatomic, copy) void (^onRestoreCompleted)(BOOL hasPurchases);
 
 @property (nonatomic, assign, getter=isProductsAvailable) BOOL isProductsAvailable;
 
@@ -223,7 +223,7 @@ static MKStoreManager* _sharedStoreManager;
 			 @"MKStoreKitConfigs.plist"]];
 }
 
-- (void) restorePreviousTransactionsOnComplete:(void (^)(void)) completionBlock
+- (void) restorePreviousTransactionsOnComplete:(void (^)(BOOL hasPurchases)) completionBlock
                                        onError:(void (^)(NSError*)) errorBlock
 {
 	self.onRestoreCompleted = completionBlock;
@@ -232,10 +232,10 @@ static MKStoreManager* _sharedStoreManager;
 	[[SKPaymentQueue defaultQueue] restoreCompletedTransactions];
 }
 
--(void) restoreCompleted
+-(void) restoreCompleted:(BOOL)hasPurchases
 {
 	if(self.onRestoreCompleted)
-		self.onRestoreCompleted();
+		self.onRestoreCompleted(hasPurchases);
 	self.onRestoreCompleted = nil;
 }
 
@@ -783,7 +783,7 @@ static MKStoreManager* _sharedStoreManager;
 
 - (void)paymentQueueRestoreCompletedTransactionsFinished:(SKPaymentQueue *)queue
 {
-	[self restoreCompleted];
+	[self restoreCompleted:queue.transactions.count > 0];
 }
 
 - (void) failedTransaction: (SKPaymentTransaction *)transaction
